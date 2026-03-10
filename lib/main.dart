@@ -1,38 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'views/dashboard_screen.dart';
+import 'constants/supabase_constants.dart';
+import 'constants/app_theme.dart';
+import 'providers/auth_provider.dart';
+import 'views/onboarding/splash_screen.dart';
+import 'views/onboarding/onboarding_screen.dart';
+import 'views/auth/login_screen.dart';
+import 'views/project/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // NOT: Buradaki URL ve Key bilgilerini Supabase panelinden almalısın
+  // Sistem UI stili
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+  ));
+
   await Supabase.initialize(
-    url: 'https://myuamvlpbveqyrqyyhwi.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15dWFtdmxwYnZlcXlycXl5aHdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMDU2NDgsImV4cCI6MjA4ODY4MTY0OH0.hudwTwxpUv89wKN6lODasa7eSjCZiNroE70QTTHgufk',
+    url: SupabaseConstants.supabaseUrl,
+    anonKey: SupabaseConstants.supabaseAnonKey,
   );
 
   runApp(
     const ProviderScope(
-      child: ArchLensApp(),
+      child: DesignAllApp(),
     ),
   );
 }
 
-class ArchLensApp extends StatelessWidget {
-  const ArchLensApp({super.key});
+class DesignAllApp extends ConsumerWidget {
+  const DesignAllApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'DesignAll ArchLens',
+      title: 'DesignAll',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.light,
-      ),
-      home: const DashboardScreen(),
+      theme: AppTheme.lightTheme,
+      home: const AuthGate(),
+    );
+  }
+}
+
+/// Auth durumuna göre doğru ekrana yönlendirir
+class AuthGate extends ConsumerWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+
+    return authState.when(
+      data: (state) {
+        if (state.session != null) {
+          return const DashboardScreen();
+        }
+        return const LoginScreen();
+      },
+      loading: () => const SplashScreen(),
+      error: (_, __) => const LoginScreen(),
     );
   }
 }
