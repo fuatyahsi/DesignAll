@@ -29,6 +29,7 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
   List<ARNode> nodes = [];
   List<ARAnchor> anchors = [];
   List<_MeasurementEntry> measurements = [];
+  final List<vector.Vector3> tappedPoints = [];
   String distanceResult = 'Ölçüm için iki noktaya dokunun';
   bool isReady = false;
 
@@ -43,6 +44,7 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
       nodes.clear();
       anchors.clear();
       distanceResult = 'Ölçüm için iki noktaya dokunun';
+      tappedPoints.clear();
     });
   }
 
@@ -181,50 +183,79 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
     setState(() => isReady = true);
   }
 
-  Future<void> onPlaneOrPointTap(List<ARHitTestResult> hitTestResults) async {
-    if (hitTestResults.isNotEmpty) {
-      var singleHitTestResult = hitTestResults.firstWhere(
-        (hitTestResult) => hitTestResult.type == ARHitTestResultType.plane,
+  Future<void> onPlaneOrPointTap(List<dynamic> hitTestResults) async {
+    if (hitTestResults.isEmpty) {
+      return;
+    }
+
+    final singleHitTestResult = hitTestResults.first;
+    final worldTransform = singleHitTestResult.worldTransform;
+
+    final newAnchor = ARPlaneAnchor(transformation: worldTransform);
+    final bool? didAddAnchor = await arAnchorManager?.addAnchor(newAnchor);
+
+    if (didAddAnchor == true) {
+      anchors.add(newAnchor);
+      final newNode = ARNode(
+        type: NodeType.localGLTF2,
+        uri: 'assets/models/dot.gltf',
+        scale: vector.Vector3(0.05, 0.05, 0.05),
+        position: vector.Vector3.zero(),
+        rotation: vector.Vector4(1, 0, 0, 0),
       );
-
-      var newAnchor = ARPlaneAnchor(transformation: singleHitTestResult.worldTransform);
-      bool? didAddAnchor = await arAnchorManager!.addAnchor(newAnchor);
-
-      if (didAddAnchor!) {
-        anchors.add(newAnchor);
-        var newNode = ARNode(
-          type: NodeType.localGLTF2,
-          uri: 'assets/models/dot.gltf',
-          scale: vector.Vector3(0.05, 0.05, 0.05),
-          position: vector.Vector3(0, 0, 0),
-          rotation: vector.Vector4(1, 0, 0, 0),
-        );
-        bool? didAddNode = await arObjectManager!.addNode(newNode, anchor: newAnchor);
-        if (didAddNode!) {
-          nodes.add(newNode);
-        }
-      }
-
-      if (nodes.length >= 2) {
-        final position1 = nodes[nodes.length - 2].position;
-        final position2 = nodes[nodes.length - 1].position;
-        final distance = _calculateDistance(position1, position2);
-
-        final entry = _MeasurementEntry(
-          distance: distance,
-          timestamp: DateTime.now(),
-        );
-
-        setState(() {
-          measurements.add(entry);
-          if (distance >= 1) {
-            distanceResult = '${distance.toStringAsFixed(2)} metre';
-          } else {
-            distanceResult = '${(distance * 100).toStringAsFixed(1)} cm';
-          }
-        });
+      final bool? didAddNode = await arObjectManager?.addNode(newNode);
+      if (didAddNode == true) {
+        nodes.add(newNode);
       }
     }
+
+    final hitPoint = _extractPositionFromTransform(worldTransform);
+    tappedPoints.add(hitPoint);
+
+    if (tappedPoints.length >= 2) {
+      final distance = _calculateDistance(
+        tappedPoints[tappedPoints.length - 2],
+        tappedPoints[tappedPoints.length - 1],
+      );
+
+      final entry = _MeasurementEntry(
+        distance: distance,
+        timestamp: DateTime.now(),
+      );
+
+      setState(() {
+        measurements.add(entry);
+        if (distance >= 1) {
+          distanceResult = '${distance.toStringAsFixed(2)} metre';
+        } else {
+          distanceResult = '${(distance * 100).toStringAsFixed(1)} cm';
+        }
+      });
+    }
+  }
+
+  vector.Vector3 _extractPositionFromTransform(dynamic worldTransform) {
+    try {
+      if (worldTransform is vector.Matrix4) {
+        return vector.Vector3(
+          worldTransform.entry(0, 3),
+          worldTransform.entry(1, 3),
+          worldTransform.entry(2, 3),
+        );
+      }
+
+      if (worldTransform is List && worldTransform.length >= 16) {
+        return vector.Vector3(
+          (worldTransform[12] as num).toDouble(),
+          (worldTransform[13] as num).toDouble(),
+          (worldTransform[14] as num).toDouble(),
+        );
+      }
+    } catch (_) {
+      return vector.Vector3.zero();
+    }
+
+    return vector.Vector3.zero();
   }
 
   double _calculateDistance(vector.Vector3 start, vector.Vector3 end) {
