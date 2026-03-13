@@ -14,11 +14,11 @@ android {
 
     defaultConfig {
         applicationId = "com.example.design_all"
-        minSdk = 24 // AR için şart
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-        multiDexEnabled = true // Bellek sınırını aşmak için
+        multiDexEnabled = true
     }
 
     compileOptions {
@@ -42,6 +42,5 @@ flutter {
 }
 
 dependencies {
-    // MultiDex kütüphanesi
     implementation("androidx.multidex:multidex:2.0.1")
 }

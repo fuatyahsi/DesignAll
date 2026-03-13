@@ -1,5 +1,5 @@
 name: design_all
-description: İç Mimarlık Proje ve Tasarım Asistanı
+description: Proje ve Tasarım Asistanı
 version: 1.0.0+1
 
 environment:
@@ -32,8 +32,9 @@ dependencies:
   palette_generator: ^0.3.3+3
   flex_color_picker: ^3.4.1
 
-  # AR Ölçü Aracı
-  ar_flutter_plugin: ^0.7.3
+  # Kamera & AR Ölçüm
+  camera: ^0.11.0+2
+  sensors_plus: ^6.1.1
 
   # Animasyonlar
   flutter_animate: ^4.5.0

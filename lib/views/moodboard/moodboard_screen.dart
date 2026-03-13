@@ -8,7 +8,7 @@ import '../../constants/app_theme.dart';
 
 class MoodboardScreen extends StatefulWidget {
   final String projectName;
-  const MoodboardScreen({super.key, required this.projectName});
+  const MoodboardScreen({super.key, this.projectName = 'Moodboard'});
 
   @override
   State<MoodboardScreen> createState() => _MoodboardScreenState();
@@ -126,10 +126,7 @@ class _MoodboardScreenState extends State<MoodboardScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('Moodboard', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.share2, size: 20),
@@ -200,7 +197,7 @@ class _MoodboardScreenState extends State<MoodboardScreen> {
                         Text('Moodboard Boş', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Text(
-                          'İlham fotoğrafları, renkler ve notlar\nekleyerek tasarım vizyonunu oluştur.',
+                          'İlham fotoğrafları, renkler ve notlar\nekleyerek vizyonunu oluştur.',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
                         ),

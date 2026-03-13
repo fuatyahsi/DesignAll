@@ -101,10 +101,7 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('Müşteriler', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: FutureBuilder(
         future: service.getClients(),

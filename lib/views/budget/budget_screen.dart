@@ -16,8 +16,8 @@ class BudgetScreen extends ConsumerStatefulWidget {
 
   const BudgetScreen({
     super.key,
-    required this.projectId,
-    required this.projectName,
+    this.projectId = '',
+    this.projectName = 'Bütçe',
     this.totalBudget,
   });
 
@@ -36,12 +36,23 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
   }
 
   Future<void> _loadItems() async {
-    final service = ref.read(supabaseServiceProvider);
-    final items = await service.getBudgetItems(widget.projectId);
-    setState(() {
-      _items = items;
-      _isLoading = false;
-    });
+    if (widget.projectId.isEmpty) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final service = ref.read(supabaseServiceProvider);
+      final items = await service.getBudgetItems(widget.projectId);
+      if (mounted) {
+        setState(() {
+          _items = items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+      debugPrint('Budget load error: $e');
+    }
   }
 
   double get _totalSpent => _items.fold(0, (sum, item) => sum + item.totalPrice);

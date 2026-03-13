@@ -39,7 +39,7 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'İç Mimarlık Asistanı',
+              'Proje & Tasarım Asistanı',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,

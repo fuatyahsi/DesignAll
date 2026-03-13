@@ -3,7 +3,7 @@ class AppStrings {
 
   // App
   static const appName = 'DesignAll';
-  static const appTagline = 'İç Mimarlık Proje Asistanı';
+  static const appTagline = 'Proje & Tasarım Asistanı';
 
   // Auth
   static const login = 'Giriş Yap';
@@ -27,12 +27,12 @@ class AppStrings {
 
   // Project
   static const projectName = 'Proje Adı';
-  static const projectLocation = 'Konum / Müşteri Bilgisi';
-  static const takePhoto = 'Mekan Fotoğrafı Çek';
+  static const projectLocation = 'Konum / Bilgi';
+  static const takePhoto = 'Fotoğraf Çek';
   static const saveProject = 'PROJEYİ KAYDET';
   static const projectSaved = 'Proje başarıyla kaydedildi!';
   static const fillRequired = 'Lütfen bir isim yazın ve fotoğraf çekin!';
-  static const colorPalette = 'Mekan Renk Paleti';
+  static const colorPalette = 'Renk Paleti';
   static const projectNotes = 'Proje Notları';
 
   // AR
@@ -40,11 +40,11 @@ class AppStrings {
   static const arInstruction = 'Ölçüm için iki noktaya dokunun';
   static const distanceLabel = 'Mesafe';
 
-  // Room Types
+  // Room / Space Types
   static const roomTypes = [
     'Salon', 'Yatak Odası', 'Mutfak', 'Banyo',
     'Çocuk Odası', 'Ofis', 'Balkon', 'Giriş',
-    'Yemek Odası', 'Koridor', 'Diğer',
+    'Yemek Odası', 'Koridor', 'Bahçe', 'Garaj', 'Diğer',
   ];
 
   // Project Status
@@ -55,18 +55,19 @@ class AppStrings {
   // Budget Categories
   static const budgetCategories = [
     'Mobilya', 'Boya & Duvar', 'Aydınlatma', 'Zemin',
-    'Tekstil', 'Aksesuar', 'İşçilik', 'Nakliye', 'Diğer',
+    'Tekstil', 'Aksesuar', 'İşçilik', 'Nakliye',
+    'Elektronik', 'Dekorasyon', 'Diğer',
   ];
 
   // Onboarding
   static const onboardingTitle1 = 'Projelerini Yönet';
-  static const onboardingDesc1 = 'Tüm iç mimarlık projelerini tek bir yerden takip et.';
+  static const onboardingDesc1 = 'Tüm projelerini tek bir yerden kolayca takip et.';
   static const onboardingTitle2 = 'AR ile Ölç';
   static const onboardingDesc2 = 'Artırılmış gerçeklik ile mekanları santimetrik hassasiyetle ölç.';
   static const onboardingTitle3 = 'Renk Paleti Çıkar';
-  static const onboardingDesc3 = 'Fotoğraflardan otomatik renk paleti oluştur ve tasarımlarına ilham kat.';
+  static const onboardingDesc3 = 'Fotoğraflardan otomatik renk paleti oluştur ve projelerine ilham kat.';
   static const onboardingTitle4 = 'Haydi Başlayalım';
-  static const onboardingDesc4 = 'Profesyonel tasarım asistanın hazır. Hemen ilk projeni oluştur!';
+  static const onboardingDesc4 = 'Kişisel proje asistanın hazır. Hemen ilk projeni oluştur!';
   static const getStarted = 'Başla';
   static const skip = 'Atla';
   static const next = 'İleri';
