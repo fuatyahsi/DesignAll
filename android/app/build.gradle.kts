@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.design_all"
-    compileSdk = 34
+    compileSdk = 35
 
     sourceSets {
         getByName("main").java.srcDirs("src/main/kotlin")
@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "com.example.design_all"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
         multiDexEnabled = true
