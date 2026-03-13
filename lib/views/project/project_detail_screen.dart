@@ -7,6 +7,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_theme.dart';
 import '../../utils/helpers.dart';
+// Yeni eklediğimiz sayfa importu
+import 'before_after_screen.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Map<String, dynamic> project;
@@ -76,7 +78,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> with SingleTi
         ],
         body: Column(
           children: [
-            // Proje bilgileri
+            // Proje bilgileri ve Karşılaştırma Butonu
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -84,6 +86,34 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> with SingleTi
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- HAMLE 1: Dönüşümü Planla Butonu ---
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BeforeAfterScreen(
+                              projectName: project['name'] ?? 'Proje',
+                              existingImageUrl: project['image_url'],
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(LucideIcons.gitCompare, size: 20, color: Colors.white),
+                      label: const Text('DÖNÜŞÜMÜ PLANLA (ÖNCE / SONRA)'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // ---------------------------------------
+
                   Row(
                     children: [
                       _StatusBadge(status: status),
@@ -337,8 +367,8 @@ class _CircleIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
       child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), shape: BoxShape.circle), child: Icon(icon, color: Colors.white, size: 18)),
+      onTap: onTap,
     );
   }
 }
