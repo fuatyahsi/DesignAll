@@ -286,47 +286,158 @@ class _MeasurementsTab extends StatelessWidget {
 }
 
 // ─── Notlar Tab ────────────────────────────────────────
-class _NotesTab extends StatelessWidget {
+// ─── Görsel Notlar Tab (Photo Markup) ────────────────────────────────────────
+class _NotesTab extends StatefulWidget {
   final Map<String, dynamic> project;
   const _NotesTab({required this.project});
 
   @override
+  State<_NotesTab> createState() => _NotesTabState();
+}
+
+class _NotesTabState extends State<_NotesTab> {
+  // Pin'leri tutan liste (Şu anlık lokal, Supabase entegrasyonu sonra yapılacak)
+  final List<Map<String, dynamic>> _pins = [];
+
+  void _addPin(Offset localPosition, Size imageSize) {
+    // Koordinatları resim boyutuna göre oranlıyoruz (0.0 - 1.0 arası)
+    final double dx = localPosition.dx / imageSize.width;
+    final double dy = localPosition.dy / imageSize.height;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Bu Noktaya Not Ekle'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: "Örn: Kanepe buraya alınacak"),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal')),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  setState(() {
+                    _pins.add({
+                      'x': dx,
+                      'y': dy,
+                      'note': controller.text,
+                      'color': AppColors.accent,
+                    });
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Kaydet'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final notes = project['notes'] as String?;
+    final imageUrl = widget.project['image_url'];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('Proje Notları', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600)),
-            IconButton(icon: const Icon(LucideIcons.plus, size: 20), onPressed: () {}),
-          ]),
-          const SizedBox(height: 16),
-          if (notes != null && notes.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppTheme.radiusMD), border: Border.all(color: AppColors.border, width: 0.5)),
-              child: Text(notes, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary, height: 1.6)),
+          Text('Görsel Planlama', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Text('Fotoğrafın üzerine dokunarak değişim notlarını ekle.', 
+               style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary)),
+          const SizedBox(height: 20),
+
+          // İnteraktif Fotoğraf Alanı
+          if (imageUrl != null)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final double width = constraints.maxWidth;
+                final double height = width * 0.75; // 4:3 oranında gösterim
+
+                return GestureDetector(
+                  onTapUp: (details) => _addPin(details.localPosition, Size(width, height)),
+                  child: Stack(
+                    children: [
+                      // Ana Fotoğraf
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          width: width,
+                          height: height,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      // Pin'ler
+                      ..._pins.map((pin) {
+                        return Positioned(
+                          left: pin['x'] * width - 15,
+                          top: pin['y'] * height - 15,
+                          child: Tooltip(
+                            message: pin['note'],
+                            triggerMode: TooltipTriggerMode.tap,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: pin['color'].withOpacity(0.9),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)],
+                              ),
+                              child: const Icon(LucideIcons.info, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                );
+              },
             )
           else
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: Column(children: [
-                  Icon(LucideIcons.stickyNote, size: 48, color: AppColors.border),
-                  const SizedBox(height: 12),
-                  Text('Henüz not eklenmemiş.', style: GoogleFonts.inter(color: AppColors.textTertiary)),
-                ]),
+            const Text("Fotoğraf bulunamadı."),
+
+          const SizedBox(height: 32),
+          Text('Not Listesi', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          
+          // Eklenen Notların Listesi
+          if (_pins.isEmpty)
+            Text('Henüz bir planlama notu eklenmemiş.', style: TextStyle(color: AppColors.textTertiary))
+          else
+            ..._pins.map((pin) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                border: Border.all(color: AppColors.border, width: 0.5),
               ),
-            ),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.mapPin, size: 16, color: AppColors.accent),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(pin['note'], style: const TextStyle(fontSize: 14))),
+                  IconButton(
+                    icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.grey),
+                    onPressed: () => setState(() => _pins.remove(pin)),
+                  )
+                ],
+              ),
+            )),
         ],
       ),
     );
   }
 }
-
 // ─── Yardımcı Widget'lar ───────────────────────────────
 class _InfoRow extends StatelessWidget {
   final IconData icon;
