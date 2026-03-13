@@ -31,7 +31,18 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
   List<_MeasurementEntry> measurements = [];
   final List<vector.Vector3> tappedPoints = [];
   String distanceResult = 'Ölçüm için iki noktaya dokunun';
-  bool isReady = false;
+  
+  // UX ve Durum Takibi
+  bool _planesDetected = false;
+  int _pointCount = 0;
+  bool _showInstructions = true;
+
+  String get _instructionText {
+    if (!_planesDetected) return 'Zemini taramak için telefonu yavaşça hareket ettirin';
+    if (_pointCount == 0) return 'Ölçüme başlamak için bir noktaya dokunun';
+    if (_pointCount == 1) return 'Mesafeyi görmek için ikinci noktaya dokunun';
+    return 'Yeni bir nokta seçebilir veya sıfırlayabilirsiniz';
+  }
 
   @override
   void dispose() {
@@ -45,6 +56,7 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
       anchors.clear();
       distanceResult = 'Ölçüm için iki noktaya dokunun';
       tappedPoints.clear();
+      _pointCount = 0;
     });
   }
 
@@ -54,105 +66,97 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // AR View
           ARView(
             onARViewCreated: onARViewCreated,
-            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
+            // Sadece Yatay (Zemin) algılama: Performansı artırır
+            planeDetectionConfig: PlaneDetectionConfig.horizontal,
           ),
+
+          // 1. REHBER KATMANI (Açılış Yardımı)
+          if (_showInstructions)
+            Container(
+              color: Colors.black.withOpacity(0.7),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(LucideIcons.smartphone, size: 80, color: Colors.white),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        'AR Ölçümü için telefonunuzu dairesel hareketlerle zemine doğru tutun.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
+                      onPressed: () => setState(() => _showInstructions = false),
+                      child: const Text('Anladım, Başlat'),
+                    )
+                  ],
+                ),
+              ),
+            ),
 
           // Üst bar
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+            top: 0, left: 0, right: 0,
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    _ArButton(
-                      icon: LucideIcons.arrowLeft,
-                      onTap: () => Navigator.pop(context),
-                    ),
+                    _ArIconButton(icon: LucideIcons.arrowLeft, onTap: () => Navigator.pop(context)),
                     const Spacer(),
-                    Text(
-                      'AR Ölçü Aracı',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                    Text('AR Ölçü Aracı', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                     const Spacer(),
-                    _ArButton(
-                      icon: LucideIcons.rotateCcw,
-                      onTap: _clearPoints,
-                    ),
+                    _ArIconButton(icon: LucideIcons.rotateCcw, onTap: _clearPoints),
                   ],
                 ),
               ),
             ),
           ),
 
-          // Alt panel — ölçüm sonucu
+          // Dinamik Yönlendirme Mesajı
           Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
+            bottom: 110, left: 0, right: 0,
+            child: Center(
+              child: AnimatedOpacity(
+                opacity: _showInstructions ? 0 : 1,
+                duration: const Duration(milliseconds: 500),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(20)),
+                  child: Text(_instructionText, style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
+                ),
+              ),
+            ),
+          ),
+
+          // Alt Panel (Sonuçlar)
+          Positioned(
+            bottom: 20, left: 0, right: 0,
             child: SafeArea(
-              child: Column(
-                children: [
-                  // Ölçüm sonucu
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusLG),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.ruler, size: 20, color: AppColors.accent),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(distanceResult, style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          LucideIcons.ruler,
-                          size: 20,
-                          color: AppColors.accent,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            distanceResult,
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        if (measurements.isNotEmpty)
-                          GestureDetector(
-                            onTap: () => _showMeasurementHistory(context),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${measurements.length}',
-                                style: GoogleFonts.inter(
-                                  color: AppColors.accent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -172,21 +176,20 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
     this.arAnchorManager = arAnchorManager;
 
     this.arSessionManager!.onInitialize(
-      showFeaturePoints: false,
+      showFeaturePoints: true, // Noktaları göstererek kullanıcının zemini taradığını anlamasını sağlar
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
     );
     this.arObjectManager!.onInitialize();
-    this.arSessionManager!.onPlaneOrPointTap = onPlaneOrPointTap;
-
-    setState(() => isReady = true);
+    this.arSessionManager!.onPlaneOrPointTap = (results) {
+      if (!_planesDetected) setState(() => _planesDetected = true);
+      onPlaneOrPointTap(results);
+    };
   }
 
   Future<void> onPlaneOrPointTap(List<dynamic> hitTestResults) async {
-    if (hitTestResults.isEmpty) {
-      return;
-    }
+    if (hitTestResults.isEmpty) return;
 
     final singleHitTestResult = hitTestResults.first;
     final worldTransform = singleHitTestResult.worldTransform;
@@ -201,153 +204,43 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> {
         uri: 'assets/models/dot.gltf',
         scale: vector.Vector3(0.05, 0.05, 0.05),
         position: vector.Vector3.zero(),
-        rotation: vector.Vector4(1, 0, 0, 0),
       );
       final bool? didAddNode = await arObjectManager?.addNode(newNode);
-      if (didAddNode == true) {
-        nodes.add(newNode);
-      }
+      if (didAddNode == true) nodes.add(newNode);
     }
 
     final hitPoint = _extractPositionFromTransform(worldTransform);
     tappedPoints.add(hitPoint);
 
-    if (tappedPoints.length >= 2) {
-      final distance = _calculateDistance(
-        tappedPoints[tappedPoints.length - 2],
-        tappedPoints[tappedPoints.length - 1],
-      );
-
-      final entry = _MeasurementEntry(
-        distance: distance,
-        timestamp: DateTime.now(),
-      );
-
-      setState(() {
-        measurements.add(entry);
-        if (distance >= 1) {
-          distanceResult = '${distance.toStringAsFixed(2)} metre';
-        } else {
-          distanceResult = '${(distance * 100).toStringAsFixed(1)} cm';
-        }
-      });
-    }
+    setState(() {
+      _pointCount++;
+      if (tappedPoints.length >= 2) {
+        final distance = _calculateDistance(tappedPoints[tappedPoints.length - 2], tappedPoints[tappedPoints.length - 1]);
+        distanceResult = distance >= 1 ? '${distance.toStringAsFixed(2)} m' : '${(distance * 100).toStringAsFixed(1)} cm';
+      }
+    });
   }
 
   vector.Vector3 _extractPositionFromTransform(dynamic worldTransform) {
-    try {
-      if (worldTransform is vector.Matrix4) {
-        return vector.Vector3(
-          worldTransform.entry(0, 3),
-          worldTransform.entry(1, 3),
-          worldTransform.entry(2, 3),
-        );
-      }
-
-      if (worldTransform is List && worldTransform.length >= 16) {
-        return vector.Vector3(
-          (worldTransform[12] as num).toDouble(),
-          (worldTransform[13] as num).toDouble(),
-          (worldTransform[14] as num).toDouble(),
-        );
-      }
-    } catch (_) {
-      return vector.Vector3.zero();
-    }
-
+    if (worldTransform is vector.Matrix4) return vector.Vector3(worldTransform.entry(0, 3), worldTransform.entry(1, 3), worldTransform.entry(2, 3));
     return vector.Vector3.zero();
   }
 
-  double _calculateDistance(vector.Vector3 start, vector.Vector3 end) {
-    return start.distanceTo(end);
-  }
-
-  void _showMeasurementHistory(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text('Ölçüm Geçmişi', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              ...measurements.asMap().entries.map((entry) {
-                final m = entry.value;
-                final i = entry.key + 1;
-                final formatted = m.distance >= 1
-                    ? '${m.distance.toStringAsFixed(2)} m'
-                    : '${(m.distance * 100).toStringAsFixed(1)} cm';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMD),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32, height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text('$i', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.primary)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(formatted, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
-                        const Spacer(),
-                        Text(
-                          '${m.timestamp.hour}:${m.timestamp.minute.toString().padLeft(2, '0')}',
-                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textTertiary),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  double _calculateDistance(vector.Vector3 start, vector.Vector3 end) => start.distanceTo(end);
 }
 
-class _ArButton extends StatelessWidget {
+class _ArIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-
-  const _ArButton({required this.icon, required this.onTap});
+  const _ArIconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
+        width: 40, height: 40,
+        decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: Colors.white, size: 20),
       ),
     );
@@ -357,6 +250,5 @@ class _ArButton extends StatelessWidget {
 class _MeasurementEntry {
   final double distance;
   final DateTime timestamp;
-
   _MeasurementEntry({required this.distance, required this.timestamp});
 }
