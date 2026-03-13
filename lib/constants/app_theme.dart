@@ -93,7 +93,7 @@ class AppTheme {
       ),
 
       // Cards
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -215,7 +215,7 @@ class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusXL)),
         titleTextStyle: GoogleFonts.inter(
