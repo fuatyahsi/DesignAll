@@ -1,13 +1,12 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // Flutter Gradle Plugin, Android ve Kotlin pluginlerinden sonra uygulanmalıdır.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.example.design_all"
-    compileSdk = 34 // Modern Android standartları için 34 idealdir
+    compileSdk = 34
 
     sourceSets {
         getByName("main").java.srcDirs("src/main/kotlin")
@@ -15,14 +14,11 @@ android {
 
     defaultConfig {
         applicationId = "com.example.design_all"
-        // AR özellikleri için minSdk en az 24 olmalıdır
-        minSdk = 24 
+        minSdk = 24 // AR için şart
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-
-        // Dexing hatasını çözen kritik ayar
-        multiDexEnabled = true
+        multiDexEnabled = true // Bellek sınırını aşmak için
     }
 
     compileOptions {
@@ -36,7 +32,6 @@ android {
 
     buildTypes {
         release {
-            // Debug anahtarıyla imzalanıyor (flutter run --release çalışması için)
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -47,6 +42,6 @@ flutter {
 }
 
 dependencies {
-    // MultiDex kütüphanesini ekliyoruz
+    // MultiDex kütüphanesi
     implementation("androidx.multidex:multidex:2.0.1")
 }
