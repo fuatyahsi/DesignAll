@@ -301,7 +301,7 @@ class _ArMeasurementScreenState extends State<ArMeasurementScreen> with WidgetsB
           // ─── Kamera görünümü ────────────────────
           if (_isCameraReady && _cameraController != null)
             Positioned.fill(
-              child: CameraPreview(controller: _cameraController!),
+              child: CameraPreview(_cameraController!),
             )
           else if (_cameraError)
             _buildErrorBackground()
@@ -725,7 +725,7 @@ class CameraPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CameraPreview(controller: controller);
+    return CameraPreview(controller);
   }
 }
 
